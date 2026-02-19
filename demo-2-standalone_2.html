@@ -1,0 +1,2682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="theme-color" content="#ff1744">
+  <title>LiveStream Tips - STANDALONE</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #000;
+      color: #fff;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* Top Header */
+    .top-header {
+      position: sticky;
+      top: 0;
+      background: linear-gradient(135deg, #ff1744, #c62828);
+      border-bottom: 2px solid #ffc107;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 100;
+      box-shadow: 0 4px 12px rgba(255, 23, 68, 0.4);
+    }
+    
+    .brand { font-size: 22px; font-weight: 900; }
+    
+    .token-badge {
+      background: linear-gradient(135deg, #ffc107, #ffb300);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: 900;
+      font-size: 16px;
+      color: #000;
+      box-shadow: 0 4px 12px rgba(255, 193, 7, 0.5);
+      animation: shimmer 3s infinite;
+    }
+    
+    @keyframes shimmer {
+      0%, 100% { box-shadow: 0 4px 12px rgba(255, 193, 7, 0.5); }
+      50% { box-shadow: 0 4px 20px rgba(255, 193, 7, 0.8); }
+    }
+    
+    /* Bottom Nav */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #1a0a0a;
+      border-top: 1px solid #ff1744;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      padding: 8px 0;
+      z-index: 1000;
+      box-shadow: 0 -4px 20px rgba(255, 23, 68, 0.3);
+    }
+    
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 8px;
+      color: #ff8a80;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+    }
+    
+    .nav-item.active { color: #ff1744; }
+    .nav-item-icon { font-size: 22px; }
+    
+    /* Pages */
+    .page { display: none; padding-bottom: 80px; }
+    .page.active { display: block; }
+    
+    /* Stream Grid */
+    .stream-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      padding: 16px;
+    }
+    
+    @media (min-width: 768px) {
+      .stream-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    
+    @media (min-width: 1024px) {
+      .stream-grid { grid-template-columns: repeat(3, 1fr); }
+      .bottom-nav { display: none; }
+    }
+    
+    .stream-card {
+      background: #1a0a0a;
+      border: 2px solid #2a2020;
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .stream-card:active {
+      transform: scale(0.98);
+      border-color: #ff1744;
+      box-shadow: 0 8px 24px rgba(255, 23, 68, 0.4);
+    }
+    
+    .stream-thumbnail {
+      position: relative;
+      padding-top: 56.25%;
+      background: linear-gradient(135deg, #ff1744, #c62828);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .stream-avatar {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 60px;
+      font-weight: 900;
+      color: rgba(255,255,255,0.3);
+    }
+    
+    .live-badge {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: #ff1744;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: 2px solid #ffc107;
+      animation: pulse-glow 2s infinite;
+    }
+    
+    @keyframes pulse-glow {
+      0%, 100% { 
+        box-shadow: 0 0 10px rgba(255, 23, 68, 0.6);
+        opacity: 1;
+      }
+      50% { 
+        box-shadow: 0 0 20px rgba(255, 23, 68, 1);
+        opacity: 0.8;
+      }
+    }
+    
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background: white;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    
+    .viewer-count {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: linear-gradient(135deg, #ffc107, #ffb300);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 900;
+      color: #000;
+      border: 2px solid #fff;
+    }
+    
+    .stream-info {
+      padding: 16px;
+    }
+    
+    .stream-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: #ff1744;
+      margin-bottom: 6px;
+    }
+    
+    .stream-title {
+      color: #ff8a80;
+      font-size: 14px;
+    }
+    
+    /* Room Page */
+    .video-container {
+      position: relative;
+      background: #000;
+      min-height: 60vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+    
+    .room-avatar {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 60px;
+      font-weight: 900;
+      margin-bottom: 20px;
+      border: 4px solid #ffc107;
+      box-shadow: 0 0 30px #ffc107;
+    }
+    
+    .room-name {
+      font-size: 24px;
+      font-weight: 900;
+      color: #ff1744;
+      margin-bottom: 8px;
+    }
+    
+    .room-title {
+      color: #ff8a80;
+      margin-bottom: 16px;
+    }
+    
+    .room-stats {
+      display: flex;
+      gap: 12px;
+    }
+    
+    .stat-badge {
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: 900;
+      font-size: 15px;
+    }
+    
+    .stat-live {
+      background: #ff1744;
+      border: 2px solid #ffc107;
+      animation: pulse-glow 2s infinite;
+    }
+    
+    .stat-viewers {
+      background: linear-gradient(135deg, #ffc107, #ffb300);
+      color: #000;
+    }
+    
+    /* Tip Buttons */
+    .tip-section {
+      padding: 0 16px 16px;
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .tip-section::-webkit-scrollbar { display: none; }
+    
+    .tip-btn {
+      min-width: 140px;
+      background: linear-gradient(135deg, #ff1744, #ff6b35);
+      color: #fff;
+      padding: 16px 20px;
+      border-radius: 12px;
+      font-weight: 900;
+      text-align: center;
+      box-shadow: 0 4px 16px rgba(255, 23, 68, 0.4);
+      border: 2px solid #ffc107;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    
+    .tip-btn:active {
+      transform: scale(0.95);
+      box-shadow: 0 8px 24px rgba(255, 23, 68, 0.6);
+    }
+    
+    .tip-label {
+      font-size: 18px;
+      margin-bottom: 4px;
+    }
+    
+    .tip-amount {
+      font-size: 16px;
+      font-weight: 900;
+    }
+    
+    /* Chat */
+    .chat-section {
+      padding: 16px;
+    }
+    
+    .chat-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #ff1744;
+      margin-bottom: 16px;
+    }
+    
+    .chat-messages {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    
+    .chat-msg {
+      background: rgba(255, 193, 7, 0.2);
+      border: 2px solid #ffc107;
+      border-radius: 8px;
+      padding: 12px;
+    }
+    
+    .chat-user {
+      font-weight: 900;
+      color: #ffc107;
+      margin-right: 8px;
+    }
+    
+    /* Lovense Sheet */
+    .sheet-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 998;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    
+    .sheet-overlay.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+    
+    .bottom-sheet {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #1a0a0a;
+      border-top: 3px solid #ffc107;
+      border-top-left-radius: 20px;
+      border-top-right-radius: 20px;
+      max-height: 70vh;
+      transform: translateY(100%);
+      transition: transform 0.3s;
+      z-index: 999;
+      box-shadow: 0 -6px 24px rgba(255, 23, 68, 0.4);
+      overflow-y: auto;
+    }
+    
+    .bottom-sheet.open {
+      transform: translateY(0);
+    }
+    
+    .sheet-handle {
+      width: 40px;
+      height: 4px;
+      background: #ff1744;
+      border-radius: 2px;
+      margin: 12px auto 16px;
+      box-shadow: 0 0 8px #ff1744;
+    }
+    
+    .sheet-header {
+      padding: 0 20px 16px;
+      border-bottom: 1px solid #2a2020;
+    }
+    
+    .sheet-title {
+      font-size: 20px;
+      font-weight: 900;
+      color: #ff4da6;
+      margin-bottom: 4px;
+    }
+    
+    .sheet-subtitle {
+      font-size: 13px;
+      color: #ff8a80;
+    }
+    
+    .sheet-content {
+      padding: 20px;
+    }
+    
+    .lovense-item {
+      background: linear-gradient(135deg, #ff4da6, #c9377f);
+      border: 2px solid #ffc107;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .lovense-item:active {
+      transform: scale(0.98);
+    }
+    
+    .lovense-label {
+      font-size: 18px;
+      font-weight: 900;
+    }
+    
+    .lovense-cost {
+      background: linear-gradient(135deg, #ffc107, #ffb300);
+      color: #000;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 900;
+    }
+    
+    .close-btn {
+      background: #1a0a0a;
+      border: 2px solid #ff1744;
+      color: white;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+      position: absolute;
+      top: 20px;
+      right: 20px;
+    }
+    
+    /* Floating Private Show Button */
+    .floating-private-btn {
+      position: fixed;
+      right: 16px;
+      bottom: 35vh;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ffc107, #ff8c00, #9b59b6);
+      border: 3px solid #ffc107;
+      color: white;
+      font-weight: 900;
+      cursor: pointer;
+      z-index: 99;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      box-shadow: 0 8px 24px rgba(255, 193, 7, 0.6);
+      animation: floatPulse 3s infinite;
+    }
+    
+    .floating-private-btn:active {
+      transform: scale(0.95);
+    }
+    
+    @keyframes floatPulse {
+      0%, 100% {
+        box-shadow: 0 8px 24px rgba(255, 193, 7, 0.6);
+        transform: scale(1);
+      }
+      50% {
+        box-shadow: 0 12px 32px rgba(255, 193, 7, 0.8);
+        transform: scale(1.05);
+      }
+    }
+    
+    .floating-btn-icon {
+      font-size: 26px;
+      line-height: 1;
+    }
+    
+    .floating-btn-text {
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      line-height: 1;
+    }
+    
+    .floating-btn-price {
+      font-size: 11px;
+      font-weight: 900;
+      color: #000;
+      background: rgba(255,255,255,0.9);
+      padding: 2px 6px;
+      border-radius: 4px;
+      line-height: 1;
+    }
+    
+    @media (min-width: 1024px) {
+      .floating-private-btn {
+        width: 90px;
+        height: 90px;
+      }
+      .floating-btn-icon {
+        font-size: 30px;
+      }
+      .floating-btn-text {
+        font-size: 11px;
+      }
+      .floating-btn-price {
+        font-size: 12px;
+      }
+    }
+    
+    /* Controls */
+    .room-controls {
+      position: absolute;
+      bottom: 16px;
+      left: 16px;
+      right: 16px;
+      display: flex;
+      gap: 12px;
+    }
+    
+    .control-btn {
+      flex: 1;
+      background: linear-gradient(135deg, #ff4da6, #c9377f);
+      border: 2px solid #ffc107;
+      color: white;
+      font-size: 15px;
+      font-weight: 900;
+      padding: 14px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    
+    .control-btn:active {
+      transform: scale(0.95);
+    }
+    
+    /* Token Packages */
+    .package-grid {
+      display: grid;
+      gap: 16px;
+      padding: 16px;
+    }
+    
+    .package-card {
+      background: #1a0a0a;
+      border: 2px solid #2a2020;
+      border-radius: 12px;
+      padding: 20px;
+      position: relative;
+    }
+    
+    .package-card.popular {
+      border: 3px solid #ffc107;
+      box-shadow: 0 8px 24px rgba(255, 193, 7, 0.4);
+    }
+    
+    .popular-badge {
+      position: absolute;
+      top: -12px;
+      left: 16px;
+      background: linear-gradient(135deg, #ffc107, #ffb300);
+      padding: 6px 16px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 900;
+      color: #000;
+      box-shadow: 0 4px 12px rgba(255, 193, 7, 0.5);
+    }
+    
+    .package-icon {
+      font-size: 48px;
+      margin-bottom: 8px;
+    }
+    
+    .package-name {
+      font-size: 20px;
+      font-weight: 900;
+      margin-bottom: 4px;
+      color: #ffc107;
+    }
+    
+    .package-tokens {
+      font-size: 36px;
+      font-weight: 900;
+      color: #ff1744;
+      margin-bottom: 4px;
+    }
+    
+    .package-label {
+      font-size: 13px;
+      color: #ff8a80;
+      margin-bottom: 16px;
+    }
+    
+    .buy-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #ffc107, #ffb300);
+      color: #000;
+      padding: 16px;
+      border-radius: 8px;
+      font-size: 18px;
+      font-weight: 900;
+      border: 2px solid #ffc107;
+      box-shadow: 0 4px 16px rgba(255, 193, 7, 0.3);
+      cursor: pointer;
+    }
+    
+    .buy-btn:active {
+      transform: scale(0.95);
+    }
+    
+    .buy-btn.popular {
+      background: linear-gradient(135deg, #ff1744, #ff6b35);
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <!-- Top Header -->
+  <div class="top-header">
+    <div class="brand">💎 LiveStream</div>
+    <div class="token-badge" id="tokenBadge">🪙 250</div>
+  </div>
+
+  <!-- Lobby Page -->
+  <div class="page active" id="lobbyPage">
+    <div class="stream-grid" id="streamGrid"></div>
+  </div>
+
+  <!-- Room Page -->
+  <div class="page" id="roomPage">
+    <div class="video-container">
+      <div class="room-avatar" id="roomAvatar"></div>
+      <div class="room-name" id="roomName"></div>
+      <div class="room-title" id="roomTitle"></div>
+      <div class="room-stats">
+        <div class="stat-badge stat-live">
+          <div class="pulse-dot" style="display: inline-block; vertical-align: middle;"></div>
+          <span style="margin-left: 6px;">LIVE</span>
+        </div>
+        <div class="stat-badge stat-viewers" id="roomViewers"></div>
+      </div>
+      
+      <!-- Private Show Timer (shows during private show) -->
+      <div id="privateTimer" style="display: none; margin-top: 16px; background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(155,89,182,0.2)); border: 2px solid #ffc107; border-radius: 12px; padding: 16px; text-align: center;">
+        <div style="font-size: 12px; color: #ffc107; margin-bottom: 4px; font-weight: 700;">🔒 PRIVATE SHOW</div>
+        <div style="font-size: 32px; font-weight: 900; color: #fff; font-family: monospace;" id="timerDisplay">10:00</div>
+        <div style="font-size: 11px; color: #ff8a80; margin-top: 4px;">Time Remaining</div>
+      </div>
+      
+      <!-- More Time Button (shows during private show) -->
+      <button id="moreTimeBtn" onclick="showMoreTimeOptions()" style="display: none; width: 90%; margin: 16px auto 0; background: linear-gradient(135deg, #ffc107, #ff8c00); color: #000; border: 3px solid #ffc107; padding: 16px; border-radius: 12px; font-size: 16px; font-weight: 900; cursor: pointer; box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4); animation: shimmer 3s infinite;">
+        ➕ ADD MORE TIME
+      </button>
+      
+      <div class="room-controls">
+        <button class="control-btn" onclick="openLovense()">🔥 Lovense</button>
+        <button class="control-btn" style="background: #1a0a0a; border-color: #ff1744;">💬 Chat</button>
+      </div>
+    </div>
+    
+    <div class="tip-section" id="tipButtons"></div>
+    
+    <div class="chat-section">
+      <div class="chat-title">💬 Recent Activity</div>
+      <div class="chat-messages" id="chatMessages"></div>
+    </div>
+  </div>
+
+  <!-- Tokens Page -->
+  <div class="page" id="tokensPage">
+    <div style="padding: 20px 16px 16px;">
+      <h2 style="margin-bottom: 8px; color: #ff1744; font-size: 24px;">💳 Buy Tokens</h2>
+      <p style="color: #ff8a80; margin-bottom: 24px;">Purchase tokens to tip streamers</p>
+    </div>
+    <div class="package-grid" id="packageGrid"></div>
+  </div>
+
+  <!-- Dashboard Page -->
+  <div class="page" id="dashboardPage">
+    <div style="padding: 20px 16px;">
+      <h2 style="margin-bottom: 20px; color: #ff1744; font-size: 24px;">⚙️ Streamer Dashboard</h2>
+      
+      <!-- Tip Button Configurator -->
+      <div style="background: #1a0a0a; border: 2px solid #ff1744; border-radius: 12px; padding: 20px; margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <h3 style="color: #ff1744; font-size: 18px;">💰 Custom Tip Buttons</h3>
+          <div style="background: rgba(255, 23, 68, 0.2); padding: 6px 12px; border-radius: 8px; border: 1px solid #ff1744;">
+            <span style="color: #ff1744; font-weight: 900; font-size: 14px;">4 buttons</span>
+          </div>
+        </div>
+        
+        <p style="color: #666; font-size: 12px; margin-bottom: 16px;">Customize the 4 preset tip buttons shown in your room</p>
+        
+        <!-- Tip Button Editors -->
+        <div id="tipButtonEditors"></div>
+        
+        <button onclick="saveTipButtons()" style="width: 100%; background: linear-gradient(135deg, #ff1744, #ff6b35); border: 2px solid #ffc107; color: white; padding: 16px; border-radius: 12px; font-size: 16px; font-weight: 900; cursor: pointer; margin-top: 16px;">
+          💾 Save Tip Buttons
+        </button>
+        
+        <!-- Live Preview -->
+        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #2a2020;">
+          <h4 style="color: #ffc107; margin-bottom: 12px; font-size: 14px;">👁️ Preview</h4>
+          <div style="display: flex; gap: 12px; overflow-x: auto;">
+            <div id="tipPreview1" class="tip-btn" style="min-width: 140px; cursor: default;">
+              <div class="tip-label">🎁 Small</div>
+              <div class="tip-amount">🪙 10</div>
+            </div>
+            <div id="tipPreview2" class="tip-btn" style="min-width: 140px; cursor: default;">
+              <div class="tip-label">💖 Medium</div>
+              <div class="tip-amount">🪙 50</div>
+            </div>
+            <div id="tipPreview3" class="tip-btn" style="min-width: 140px; cursor: default;">
+              <div class="tip-label">💝 Big</div>
+              <div class="tip-amount">🪙 100</div>
+            </div>
+            <div id="tipPreview4" class="tip-btn" style="min-width: 140px; cursor: default;">
+              <div class="tip-label">🐋 Whale</div>
+              <div class="tip-amount">🪙 500</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Private Show Settings Card -->
+      <div style="background: #1a0a0a; border: 2px solid #2a2020; border-radius: 12px; padding: 20px; margin-bottom: 16px;">
+        <h3 style="color: #ffc107; margin-bottom: 16px; font-size: 18px;">🔒 Private Show Settings</h3>
+        
+        <!-- Base Pricing -->
+        <div style="margin-bottom: 20px;">
+          <label style="display: block; color: #ff8a80; font-size: 13px; margin-bottom: 8px;">💰 Tokens Per Minute</label>
+          <input type="number" id="tokensPerMin" value="60" min="10" max="500" style="width: 100%; background: #000; border: 2px solid #ffc107; border-radius: 8px; padding: 12px; color: #fff; font-size: 16px; font-weight: 700;">
+          <div style="color: #666; font-size: 11px; margin-top: 4px;">Current: $6/min (60 tokens)</div>
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+          <label style="display: block; color: #ff8a80; font-size: 13px; margin-bottom: 8px;">⏱️ Minimum Duration (minutes)</label>
+          <input type="number" id="minDuration" value="10" min="5" max="60" style="width: 100%; background: #000; border: 2px solid #ffc107; border-radius: 8px; padding: 12px; color: #fff; font-size: 16px; font-weight: 700;">
+          <div style="color: #666; font-size: 11px; margin-top: 4px;">Minimum booking: 10 minutes (600 tokens)</div>
+        </div>
+        
+        <!-- Extension Options -->
+        <div style="border-top: 1px solid #2a2020; padding-top: 20px; margin-top: 20px;">
+          <h4 style="color: #ff4da6; margin-bottom: 12px; font-size: 16px;">➕ "More Time" Extension Options</h4>
+          <p style="color: #666; font-size: 12px; margin-bottom: 16px;">Configure the extension options shown during private shows</p>
+          
+          <!-- Extension 1 -->
+          <div style="background: rgba(255, 77, 166, 0.1); border: 1px solid #ff4da6; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div>
+                <label style="display: block; color: #ff8a80; font-size: 11px; margin-bottom: 4px;">Minutes</label>
+                <input type="number" id="ext1Minutes" value="5" min="1" max="60" style="width: 100%; background: #000; border: 1px solid #ff4da6; border-radius: 6px; padding: 8px; color: #fff; font-size: 14px;">
+              </div>
+              <div>
+                <label style="display: block; color: #ff8a80; font-size: 11px; margin-bottom: 4px;">Tokens</label>
+                <input type="number" id="ext1Tokens" value="250" min="10" max="5000" style="width: 100%; background: #000; border: 1px solid #ff4da6; border-radius: 6px; padding: 8px; color: #fff; font-size: 14px;">
+              </div>
+            </div>
+          </div>
+          
+          <!-- Extension 2 -->
+          <div style="background: rgba(255, 77, 166, 0.1); border: 1px solid #ff4da6; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div>
+                <label style="display: block; color: #ff8a80; font-size: 11px; margin-bottom: 4px;">Minutes</label>
+                <input type="number" id="ext2Minutes" value="10" min="1" max="60" style="width: 100%; background: #000; border: 1px solid #ff4da6; border-radius: 6px; padding: 8px; color: #fff; font-size: 14px;">
+              </div>
+              <div>
+                <label style="display: block; color: #ff8a80; font-size: 11px; margin-bottom: 4px;">Tokens</label>
+                <input type="number" id="ext2Tokens" value="450" min="10" max="5000" style="width: 100%; background: #000; border: 1px solid #ff4da6; border-radius: 6px; padding: 8px; color: #fff; font-size: 14px;">
+              </div>
+            </div>
+          </div>
+          
+          <!-- Extension 3 -->
+          <div style="background: rgba(255, 77, 166, 0.1); border: 1px solid #ff4da6; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div>
+                <label style="display: block; color: #ff8a80; font-size: 11px; margin-bottom: 4px;">Minutes</label>
+                <input type="number" id="ext3Minutes" value="15" min="1" max="60" style="width: 100%; background: #000; border: 1px solid #ff4da6; border-radius: 6px; padding: 8px; color: #fff; font-size: 14px;">
+              </div>
+              <div>
+                <label style="display: block; color: #ff8a80; font-size: 11px; margin-bottom: 4px;">Tokens</label>
+                <input type="number" id="ext3Tokens" value="650" min="10" max="5000" style="width: 100%; background: #000; border: 1px solid #ff4da6; border-radius: 6px; padding: 8px; color: #fff; font-size: 14px;">
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <button onclick="savePrivateSettings()" style="width: 100%; background: linear-gradient(135deg, #ff1744, #ff6b35); border: 2px solid #ffc107; color: white; padding: 16px; border-radius: 12px; font-size: 16px; font-weight: 900; cursor: pointer; margin-top: 16px;">
+          💾 Save Settings
+        </button>
+      </div>
+      
+      <!-- Preview Card -->
+      <div style="background: rgba(255, 193, 7, 0.1); border: 2px solid #ffc107; border-radius: 12px; padding: 16px;">
+        <h4 style="color: #ffc107; margin-bottom: 8px; font-size: 14px;">👁️ Preview</h4>
+        <div style="font-size: 13px; color: #ff8a80; line-height: 1.6;">
+          <div><strong style="color: #fff;">Floating button:</strong> $<span id="previewPrice">6</span>/min</div>
+          <div><strong style="color: #fff;">Minimum cost:</strong> <span id="previewMinCost">600</span> tokens ($<span id="previewMinCostUSD">60</span>)</div>
+          <div style="margin-top: 8px;"><strong style="color: #fff;">Extensions:</strong></div>
+          <div>• +<span id="previewExt1Min">5</span> min = <span id="previewExt1Tokens">250</span> tokens</div>
+          <div>• +<span id="previewExt2Min">10</span> min = <span id="previewExt2Tokens">450</span> tokens</div>
+          <div>• +<span id="previewExt3Min">15</span> min = <span id="previewExt3Tokens">650</span> tokens</div>
+        </div>
+      </div>
+      
+      <!-- Lovense Configurator -->
+      <div style="background: #1a0a0a; border: 2px solid #ff4da6; border-radius: 12px; padding: 20px; margin-top: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <h3 style="color: #ff4da6; font-size: 18px;">💗 Lovense Control Levels</h3>
+          <div style="background: rgba(255, 77, 166, 0.2); padding: 6px 12px; border-radius: 8px; border: 1px solid #ff4da6;">
+            <span style="color: #ff4da6; font-weight: 900; font-size: 14px;" id="lovenseLevelCount">4/5</span>
+          </div>
+        </div>
+        
+        <!-- Existing Levels -->
+        <div id="lovenseLevelsList"></div>
+        
+        <!-- Max Warning (shown when at 5 levels) -->
+        <div id="lovenseMaxWarning" style="display: none; background: rgba(255, 77, 166, 0.15); border: 2px solid #ff4da6; border-radius: 8px; padding: 12px; margin-bottom: 16px; text-align: center;">
+          <div style="color: #ff4da6; font-weight: 700; font-size: 13px;">⚠️ Maximum 5 levels reached</div>
+          <div style="color: #ff8a80; font-size: 11px; margin-top: 4px;">Delete a level to add a new one</div>
+        </div>
+        
+        <!-- Add New Level Form (hidden when at 5) -->
+        <div id="lovenseAddForm">
+          <div style="background: rgba(255, 77, 166, 0.1); border: 2px dashed #ff4da6; border-radius: 12px; padding: 16px;">
+            <h4 style="color: #ff4da6; margin-bottom: 12px; font-size: 14px;">➕ Add New Level</h4>
+            
+            <div style="margin-bottom: 12px;">
+              <label style="display: block; color: #ff8a80; font-size: 12px; margin-bottom: 6px;">Icon</label>
+              <select id="newLovenseIcon" style="width: 100%; background: #000; border: 1px solid #ff4da6; border-radius: 6px; padding: 10px; color: #fff; font-size: 16px;">
+                <option value="💗">💗 Heart</option>
+                <option value="💖">💖 Sparkling Heart</option>
+                <option value="💝">💝 Gift Heart</option>
+                <option value="🔥">🔥 Fire</option>
+                <option value="⚡">⚡ Lightning</option>
+                <option value="💥">💥 Boom</option>
+                <option value="🌟">🌟 Star</option>
+                <option value="✨">✨ Sparkles</option>
+                <option value="🌊">🌊 Wave</option>
+                <option value="🎆">🎆 Fireworks</option>
+              </select>
+            </div>
+            
+            <div style="margin-bottom: 12px;">
+              <label style="display: block; color: #ff8a80; font-size: 12px; margin-bottom: 6px;">Label</label>
+              <input type="text" id="newLovenseLabel" placeholder="e.g., Low Vibe, Earthquake" maxlength="20" style="width: 100%; background: #000; border: 1px solid #ff4da6; border-radius: 6px; padding: 10px; color: #fff; font-size: 14px;">
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+              <div>
+                <label style="display: block; color: #ff8a80; font-size: 12px; margin-bottom: 6px;">Tokens</label>
+                <input type="number" id="newLovenseTokens" value="15" min="1" max="1000" style="width: 100%; background: #000; border: 1px solid #ff4da6; border-radius: 6px; padding: 10px; color: #fff; font-size: 14px;">
+              </div>
+              <div>
+                <label style="display: block; color: #ff8a80; font-size: 12px; margin-bottom: 6px;">Duration (sec)</label>
+                <input type="number" id="newLovenseDuration" value="10" min="1" max="300" style="width: 100%; background: #000; border: 1px solid #ff4da6; border-radius: 6px; padding: 10px; color: #fff; font-size: 14px;">
+              </div>
+            </div>
+            
+            <button onclick="addLovenseLevel()" style="width: 100%; background: linear-gradient(135deg, #ff4da6, #c9377f); color: white; border: 2px solid #ffc107; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 900; cursor: pointer;">
+              ➕ Add Level
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Schedule Configurator -->
+      <div style="background: #1a0a0a; border: 2px solid #ffc107; border-radius: 12px; padding: 20px; margin-top: 16px;">
+        <h3 style="color: #ffc107; margin-bottom: 16px; font-size: 18px;">📅 My Schedule</h3>
+        <p style="color: #666; font-size: 12px; margin-bottom: 20px;">Set your availability for chat and streaming</p>
+        
+        <!-- Online Hours Schedule -->
+        <div style="margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid #2a2020;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+            <div style="font-size: 24px;">🟢</div>
+            <h4 style="color: #fff; font-size: 16px; font-weight: 700;">Online Hours</h4>
+          </div>
+          <p style="color: #ff8a80; font-size: 12px; margin-bottom: 12px;">When you're available for chat & private bookings</p>
+          
+          <div id="onlineScheduleList"></div>
+          
+          <button onclick="addOnlineSchedule()" style="width: 100%; background: rgba(255, 193, 7, 0.1); border: 2px dashed #ffc107; color: #ffc107; padding: 12px; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 12px;">
+            ➕ Add Online Hours
+          </button>
+        </div>
+        
+        <!-- Live Streaming Hours Schedule -->
+        <div>
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+            <div style="font-size: 24px;">🔴</div>
+            <h4 style="color: #ff1744; font-size: 16px; font-weight: 700;">Live Streaming Hours</h4>
+          </div>
+          <p style="color: #ff8a80; font-size: 12px; margin-bottom: 12px;">When you're broadcasting public shows</p>
+          
+          <div id="liveScheduleList"></div>
+          
+          <button onclick="addLiveSchedule()" style="width: 100%; background: rgba(255, 23, 68, 0.1); border: 2px dashed #ff1744; color: #ff1744; padding: 12px; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 12px;">
+            ➕ Add Live Hours
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="showPage('lobby')">
+      <div class="nav-item-icon">🏠</div>
+      <div>Home</div>
+    </button>
+    <button class="nav-item" onclick="showPage('lobby')">
+      <div class="nav-item-icon">🔍</div>
+      <div>Browse</div>
+    </button>
+    <button class="nav-item" onclick="showPage('tokens')">
+      <div class="nav-item-icon">💳</div>
+      <div>Wallet</div>
+    </button>
+    <button class="nav-item" onclick="showPage('dashboard')">
+      <div class="nav-item-icon">⚙️</div>
+      <div>Settings</div>
+    </button>
+  </nav>
+
+  <!-- Floating Private Show Button -->
+  <button class="floating-private-btn" id="floatingPrivateBtn" onclick="openPrivateSheet()">
+    <div class="floating-btn-icon">🔒</div>
+    <div class="floating-btn-text">PRIVATE</div>
+    <div class="floating-btn-price">$6/min</div>
+  </button>
+
+  <!-- Lovense Bottom Sheet -->
+  <div class="sheet-overlay" id="lovenseOverlay" onclick="closeLovense()"></div>
+  <div class="bottom-sheet" id="lovenseSheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-title">🔥 Lovense Control</div>
+      <div class="sheet-subtitle">Lush 4 • 🔋 87%</div>
+      <button class="close-btn" onclick="closeLovense()">✕</button>
+    </div>
+    <div class="sheet-content" id="lovenseContent"></div>
+  </div>
+
+  <!-- Private Show Bottom Sheet -->
+  <div class="sheet-overlay" id="privateOverlay" onclick="closePrivateSheet()"></div>
+  <div class="bottom-sheet" id="privateSheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-title" style="color: #ffc107;">🔒 Private Show</div>
+      <div class="sheet-subtitle">Exclusive 1-on-1 experience</div>
+      <button class="close-btn" onclick="closePrivateSheet()">✕</button>
+    </div>
+    <div class="sheet-content">
+      <!-- Premium Card -->
+      <div style="background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(155,89,182,0.15)); border: 3px solid #ffc107; border-radius: 16px; padding: 24px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(255, 193, 7, 0.3);">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <div style="font-size: 56px; margin-bottom: 12px;">👑</div>
+          <div style="font-size: 22px; font-weight: 900; color: #ffc107; margin-bottom: 6px;">Exclusive 1-on-1 Show</div>
+          <div style="font-size: 14px; color: #ff8a80;">Just you and the streamer</div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px;">
+          <div style="background: rgba(0,0,0,0.4); padding: 16px; border-radius: 12px; text-align: center; border: 2px solid #ffc107;">
+            <div style="font-size: 28px; font-weight: 900; color: #ffc107;">$6</div>
+            <div style="font-size: 12px; color: #ff8a80;">per minute</div>
+          </div>
+          <div style="background: rgba(0,0,0,0.4); padding: 16px; border-radius: 12px; text-align: center; border: 2px solid #ffc107;">
+            <div style="font-size: 28px; font-weight: 900; color: #ffc107;">10 min</div>
+            <div style="font-size: 12px; color: #ff8a80;">minimum</div>
+          </div>
+        </div>
+        
+        <div style="background: rgba(0,0,0,0.4); padding: 18px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #2a2020;">
+          <div style="font-size: 14px; font-weight: 700; margin-bottom: 10px; color: #ffc107;">✨ What's Included:</div>
+          <div style="font-size: 13px; color: #ff8a80; line-height: 1.8;">
+            • Full control of the show<br>
+            • Two-way audio & video<br>
+            • Custom requests welcome<br>
+            • Lovense toy control included<br>
+            • Recording available (+$20)
+          </div>
+        </div>
+        
+        <button onclick="startPrivateShow()" style="width: 100%; background: linear-gradient(135deg, #ffc107, #ff8c00); color: #000; border: none; padding: 20px; border-radius: 12px; font-weight: 900; font-size: 18px; cursor: pointer; box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4); margin-bottom: 16px;">
+          🔒 START PRIVATE SHOW ($60)
+        </button>
+      </div>
+      
+      <!-- Spy Mode Option -->
+      <div style="background: linear-gradient(135deg, rgba(155,89,182,0.15), rgba(255,77,166,0.15)); border: 2px solid #ff4da6; border-radius: 16px; padding: 20px; box-shadow: 0 6px 20px rgba(255, 77, 166, 0.2);">
+        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 12px;">
+          <div style="font-size: 40px;">👁️</div>
+          <div>
+            <div style="font-size: 18px; font-weight: 900; color: #ff4da6; margin-bottom: 4px;">Spy Mode Available</div>
+            <div style="font-size: 13px; color: #ff8a80;">Watch someone else's private show</div>
+          </div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px;">
+          <div>
+            <div style="font-size: 20px; font-weight: 900; color: #ff4da6;">$3/min</div>
+            <div style="font-size: 11px; color: #ff8a80;">Watch only • No interaction</div>
+          </div>
+          <button onclick="joinSpyMode()" style="background: linear-gradient(135deg, #ff4da6, #c9377f); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 900; cursor: pointer; border: 2px solid #ffc107;">
+            JOIN SPY
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile Page (for offline streamers) -->
+  <div class="page" id="profilePage">
+    <div style="padding: 0; padding-bottom: 80px;">
+      <!-- Profile Header -->
+      <div style="background: linear-gradient(135deg, #ff1744, #c62828); padding: 24px 16px; position: relative;">
+        <button onclick="showPage('lobby')" style="position: absolute; top: 16px; left: 16px; background: rgba(0,0,0,0.5); border: 2px solid #ffc107; color: white; width: 40px; height: 40px; border-radius: 50%; font-size: 18px; cursor: pointer;">←</button>
+        
+        <div style="display: flex; flex-direction: column; align-items: center; margin-top: 40px;">
+          <div id="profileAvatar" style="width: 120px; height: 120px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 60px; font-weight: 900; border: 4px solid #ffc107; margin-bottom: 16px;"></div>
+          <h2 id="profileName" style="font-size: 28px; font-weight: 900; margin-bottom: 4px;"></h2>
+          <div style="background: rgba(0,0,0,0.3); padding: 6px 12px; border-radius: 12px; border: 1px solid #ffc107;">
+            <span style="color: #ff8a80; font-size: 13px;">⚫ Currently Offline</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Profile Content -->
+      <div style="padding: 20px 16px;">
+        <!-- Schedule Section -->
+        <div style="background: #1a0a0a; border: 2px solid #ffc107; border-radius: 12px; padding: 20px; margin-bottom: 16px;">
+          <h3 style="color: #ffc107; margin-bottom: 16px; font-size: 18px;">📅 Schedule</h3>
+          
+          <!-- Online Hours -->
+          <div style="margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+              <div style="font-size: 20px;">🟢</div>
+              <div style="font-size: 16px; font-weight: 700; color: #fff;">Online Hours</div>
+            </div>
+            <div style="color: #ff8a80; font-size: 13px; margin-bottom: 8px;">Available for chat & private bookings</div>
+            <div id="profileOnlineSchedule" style="display: flex; flex-direction: column; gap: 6px;"></div>
+          </div>
+          
+          <!-- Live Streaming Hours -->
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+              <div style="font-size: 20px;">🔴</div>
+              <div style="font-size: 16px; font-weight: 700; color: #ff1744;">Live Streaming Hours</div>
+            </div>
+            <div style="color: #ff8a80; font-size: 13px; margin-bottom: 8px;">Public shows & broadcasts</div>
+            <div id="profileLiveSchedule" style="display: flex; flex-direction: column; gap: 6px;"></div>
+          </div>
+        </div>
+        
+        <!-- Book Private Show -->
+        <button onclick="bookPrivateShow()" style="width: 100%; background: linear-gradient(135deg, #ffc107, #ff8c00); color: #000; border: none; padding: 20px; border-radius: 12px; font-weight: 900; font-size: 18px; cursor: pointer; box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4); margin-bottom: 16px;">
+          📅 Book Private Show in Advance
+        </button>
+        
+        <!-- Send Message -->
+        <button onclick="sendMessage()" style="width: 100%; background: linear-gradient(135deg, #ff4da6, #c9377f); color: white; border: 2px solid #ffc107; padding: 18px; border-radius: 12px; font-weight: 900; font-size: 16px; cursor: pointer;">
+          💌 Send Private Message
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- More Time Options Bottom Sheet -->
+  <div class="sheet-overlay" id="moreTimeOverlay" onclick="closeMoreTimeSheet()"></div>
+  <div class="bottom-sheet" id="moreTimeSheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-title" style="color: #ffc107;">➕ Add More Time</div>
+      <div class="sheet-subtitle">Extend your private show</div>
+      <button class="close-btn" onclick="closeMoreTimeSheet()">✕</button>
+    </div>
+    <div class="sheet-content">
+      <div style="background: rgba(255, 193, 7, 0.1); border: 2px solid #ffc107; border-radius: 12px; padding: 16px; margin-bottom: 16px; text-align: center;">
+        <div style="font-size: 14px; color: #ff8a80; margin-bottom: 8px;">⏱️ Current Time Remaining</div>
+        <div style="font-size: 36px; font-weight: 900; color: #fff; font-family: monospace;" id="moreTimeCurrentTimer">10:00</div>
+      </div>
+      
+      <div id="extensionOptions"></div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================
+    // DATABASE ABSTRACTION LAYER (inlined)
+    // ============================================
+/**
+ * LiveStream Tips - Database Abstraction Layer
+ * 
+ * TEMPORARY: Uses localStorage for client-side storage
+ * PRODUCTION: Swap commented sections to use real API/database
+ * 
+ * This file provides a unified interface for all data operations.
+ * When ready for production, simply uncomment the production code
+ * and comment out the temporary code. Your app code won't need to change!
+ */
+
+class Database {
+  constructor() {
+    this.initializeDefaults();
+  }
+
+  /**
+   * Initialize default data if nothing exists in localStorage
+   */
+  initializeDefaults() {
+    // Only set defaults if nothing exists
+    if (!localStorage.getItem('livestream_initialized')) {
+      // User data
+      this.setBalance(250);
+      
+      // Default tip buttons
+      this.saveTipButtons([
+        { icon: '🎁', label: 'Small', amount: 10 },
+        { icon: '💖', label: 'Medium', amount: 50 },
+        { icon: '💝', label: 'Big', amount: 100 },
+        { icon: '🐋', label: 'Whale', amount: 500 }
+      ]);
+      
+      // Default Lovense levels
+      this.saveLovenseLevels([
+        { id: 1, icon: '💗', label: 'Low Vibe', tokens: 15, duration: 10 },
+        { id: 2, icon: '💖', label: 'Medium Vibe', tokens: 30, duration: 15 },
+        { id: 3, icon: '💝', label: 'High Vibe', tokens: 60, duration: 20 },
+        { id: 4, icon: '🔥', label: 'Ultra Vibe', tokens: 100, duration: 30 }
+      ]);
+      
+      // Default schedules
+      this.saveOnlineSchedule([
+        { id: 1, day: 'Monday', startTime: '18:00', endTime: '23:00' },
+        { id: 2, day: 'Wednesday', startTime: '19:00', endTime: '00:00' },
+        { id: 3, day: 'Friday', startTime: '20:00', endTime: '02:00' }
+      ]);
+      
+      this.saveLiveSchedule([
+        { id: 1, day: 'Monday', startTime: '20:00', endTime: '22:00' },
+        { id: 2, day: 'Friday', startTime: '21:00', endTime: '23:00' }
+      ]);
+      
+      // Default private show settings
+      this.savePrivateShowSettings({
+        tokensPerMin: 60,
+        minDuration: 10,
+        extensions: [
+          { minutes: 5, tokens: 250 },
+          { minutes: 10, tokens: 450 },
+          { minutes: 15, tokens: 650 }
+        ]
+      });
+      
+      localStorage.setItem('livestream_initialized', 'true');
+    }
+  }
+
+  // ============================================
+  // USER / WALLET METHODS
+  // ============================================
+
+  /**
+   * Get user's token balance
+   * @returns {number} Token balance
+   */
+  getBalance() {
+    // TEMPORARY: localStorage
+    const balance = localStorage.getItem('livestream_balance');
+    return balance ? parseInt(balance) : 250;
+    
+    // PRODUCTION: Replace with API call
+    // const response = await fetch('/api/user/balance', {
+    //   headers: { 'Authorization': `Bearer ${this.getAuthToken()}` }
+    // });
+    // const data = await response.json();
+    // return data.balance;
+  }
+
+  /**
+   * Set user's token balance
+   * @param {number} amount - New balance
+   */
+  setBalance(amount) {
+    // TEMPORARY: localStorage
+    localStorage.setItem('livestream_balance', amount.toString());
+    
+    // PRODUCTION: Don't allow direct balance setting
+    // Balance should only be updated server-side after validated transactions
+    // This method would not exist in production
+  }
+
+  /**
+   * Add tokens to balance (purchase)
+   * @param {number} amount - Tokens to add
+   * @returns {Object} Transaction result
+   */
+  async addTokens(amount) {
+    // TEMPORARY: localStorage
+    const current = this.getBalance();
+    this.setBalance(current + amount);
+    
+    // Save transaction
+    this.addTransaction({
+      type: 'purchase',
+      amount: amount,
+      timestamp: Date.now()
+    });
+    
+    return { success: true, newBalance: current + amount };
+    
+    // PRODUCTION: Replace with API call
+    // const response = await fetch('/api/wallet/purchase', {
+    //   method: 'POST',
+    //   headers: { 
+    //     'Authorization': `Bearer ${this.getAuthToken()}`,
+    //     'Content-Type': 'application/json'
+    //   },
+    //   body: JSON.stringify({ amount, paymentMethod: 'ccbill' })
+    // });
+    // return response.json();
+  }
+
+  /**
+   * Deduct tokens from balance
+   * @param {number} amount - Tokens to deduct
+   * @param {string} reason - Transaction reason (tip, private, lovense)
+   * @returns {Object} Transaction result
+   */
+  async deductTokens(amount, reason = 'unknown') {
+    // TEMPORARY: localStorage
+    const current = this.getBalance();
+    
+    if (current < amount) {
+      return { success: false, error: 'Insufficient balance' };
+    }
+    
+    this.setBalance(current - amount);
+    
+    // Save transaction
+    this.addTransaction({
+      type: reason,
+      amount: -amount,
+      timestamp: Date.now()
+    });
+    
+    return { success: true, newBalance: current - amount };
+    
+    // PRODUCTION: Replace with API call
+    // const response = await fetch('/api/wallet/spend', {
+    //   method: 'POST',
+    //   headers: { 
+    //     'Authorization': `Bearer ${this.getAuthToken()}`,
+    //     'Content-Type': 'application/json'
+    //   },
+    //   body: JSON.stringify({ amount, reason, streamerId })
+    // });
+    // return response.json();
+  }
+
+  // ============================================
+  // TIP BUTTONS
+  // ============================================
+
+  /**
+   * Get custom tip buttons
+   * @returns {Array} Array of tip button configs
+   */
+  getTipButtons() {
+    // TEMPORARY: localStorage
+    const stored = localStorage.getItem('livestream_tip_buttons');
+    return stored ? JSON.parse(stored) : [];
+    
+    // PRODUCTION: Replace with API call
+    // const response = await fetch('/api/dashboard/tip-buttons', {
+    //   headers: { 'Authorization': `Bearer ${this.getAuthToken()}` }
+    // });
+    // return response.json();
+  }
+
+  /**
+   * Save custom tip buttons
+   * @param {Array} buttons - Array of tip button configs
+   */
+  saveTipButtons(buttons) {
+    // TEMPORARY: localStorage
+    localStorage.setItem('livestream_tip_buttons', JSON.stringify(buttons));
+    
+    // PRODUCTION: Replace with API call
+    // const response = await fetch('/api/dashboard/tip-buttons', {
+    //   method: 'PUT',
+    //   headers: { 
+    //     'Authorization': `Bearer ${this.getAuthToken()}`,
+    //     'Content-Type': 'application/json'
+    //   },
+    //   body: JSON.stringify({ buttons })
+    // });
+    // return response.json();
+  }
+
+  // ============================================
+  // LOVENSE LEVELS
+  // ============================================
+
+  /**
+   * Get Lovense control levels
+   * @returns {Array} Array of Lovense level configs
+   */
+  getLovenseLevels() {
+    // TEMPORARY: localStorage
+    const stored = localStorage.getItem('livestream_lovense_levels');
+    return stored ? JSON.parse(stored) : [];
+    
+    // PRODUCTION: Replace with API call
+    // const response = await fetch('/api/dashboard/lovense-levels', {
+    //   headers: { 'Authorization': `Bearer ${this.getAuthToken()}` }
+    // });
+    // return response.json();
+  }
+
+  /**
+   * Save Lovense control levels
+   * @param {Array} levels - Array of Lovense level configs
+   */
+  saveLovenseLevels(levels) {
+    // TEMPORARY: localStorage
+    localStorage.setItem('livestream_lovense_levels', JSON.stringify(levels));
+    
+    // PRODUCTION: Replace with API call
+    // const response = await fetch('/api/dashboard/lovense-levels', {
+    //   method: 'PUT',
+    //   headers: { 
+    //     'Authorization': `Bearer ${this.getAuthToken()}`,
+    //     'Content-Type': 'application/json'
+    //   },
+    //   body: JSON.stringify({ levels })
+    // });
+    // return response.json();
+  }
+
+  // ============================================
+  // SCHEDULES
+  // ============================================
+
+  /**
+   * Get online hours schedule
+   * @returns {Array} Array of schedule slots
+   */
+  getOnlineSchedule() {
+    // TEMPORARY: localStorage
+    const stored = localStorage.getItem('livestream_online_schedule');
+    return stored ? JSON.parse(stored) : [];
+    
+    // PRODUCTION: Replace with API call
+    // const response = await fetch('/api/dashboard/schedule/online', {
+    //   headers: { 'Authorization': `Bearer ${this.getAuthToken()}` }
+    // });
+    // return response.json();
+  }
+
+  /**
+   * Save online hours schedule
+   * @param {Array} schedule - Array of schedule slots
+   */
+  saveOnlineSchedule(schedule) {
+    // TEMPORARY: localStorage
+    localStorage.setItem('livestream_online_schedule', JSON.stringify(schedule));
+    
+    // PRODUCTION: Replace with API call
+    // const response = await fetch('/api/dashboard/schedule/online', {
+    //   method: 'PUT',
+    //   headers: { 
+    //     'Authorization': `Bearer ${this.getAuthToken()}`,
+    //     'Content-Type': 'application/json'
+    //   },
+    //   body: JSON.stringify({ schedule })
+    // });
+    // return response.json();
+  }
+
+  /**
+   * Get live streaming hours schedule
+   * @returns {Array} Array of schedule slots
+   */
+  getLiveSchedule() {
+    // TEMPORARY: localStorage
+    const stored = localStorage.getItem('livestream_live_schedule');
+    return stored ? JSON.parse(stored) : [];
+    
+    // PRODUCTION: Replace with API call
+    // const response = await fetch('/api/dashboard/schedule/live', {
+    //   headers: { 'Authorization': `Bearer ${this.getAuthToken()}` }
+    // });
+    // return response.json();
+  }
+
+  /**
+   * Save live streaming hours schedule
+   * @param {Array} schedule - Array of schedule slots
+   */
+  saveLiveSchedule(schedule) {
+    // TEMPORARY: localStorage
+    localStorage.setItem('livestream_live_schedule', JSON.stringify(schedule));
+    
+    // PRODUCTION: Replace with API call
+    // const response = await fetch('/api/dashboard/schedule/live', {
+    //   method: 'PUT',
+    //   headers: { 
+    //     'Authorization': `Bearer ${this.getAuthToken()}`,
+    //     'Content-Type': 'application/json'
+    //   },
+    //   body: JSON.stringify({ schedule })
+    // });
+    // return response.json();
+  }
+
+  // ============================================
+  // PRIVATE SHOW SETTINGS
+  // ============================================
+
+  /**
+   * Get private show settings
+   * @returns {Object} Private show configuration
+   */
+  getPrivateShowSettings() {
+    // TEMPORARY: localStorage
+    const stored = localStorage.getItem('livestream_private_settings');
+    return stored ? JSON.parse(stored) : {
+      tokensPerMin: 60,
+      minDuration: 10,
+      extensions: []
+    };
+    
+    // PRODUCTION: Replace with API call
+    // const response = await fetch('/api/dashboard/private-settings', {
+    //   headers: { 'Authorization': `Bearer ${this.getAuthToken()}` }
+    // });
+    // return response.json();
+  }
+
+  /**
+   * Save private show settings
+   * @param {Object} settings - Private show configuration
+   */
+  savePrivateShowSettings(settings) {
+    // TEMPORARY: localStorage
+    localStorage.setItem('livestream_private_settings', JSON.stringify(settings));
+    
+    // PRODUCTION: Replace with API call
+    // const response = await fetch('/api/dashboard/private-settings', {
+    //   method: 'PUT',
+    //   headers: { 
+    //     'Authorization': `Bearer ${this.getAuthToken()}`,
+    //     'Content-Type': 'application/json'
+    //   },
+    //   body: JSON.stringify(settings)
+    // });
+    // return response.json();
+  }
+
+  // ============================================
+  // TRANSACTIONS / HISTORY
+  // ============================================
+
+  /**
+   * Get transaction history
+   * @param {number} limit - Max number of transactions to return
+   * @returns {Array} Array of transactions
+   */
+  getTransactions(limit = 50) {
+    // TEMPORARY: localStorage
+    const stored = localStorage.getItem('livestream_transactions');
+    const transactions = stored ? JSON.parse(stored) : [];
+    return transactions.slice(0, limit);
+    
+    // PRODUCTION: Replace with API call
+    // const response = await fetch(`/api/transactions?limit=${limit}`, {
+    //   headers: { 'Authorization': `Bearer ${this.getAuthToken()}` }
+    // });
+    // return response.json();
+  }
+
+  /**
+   * Add a transaction to history
+   * @param {Object} transaction - Transaction details
+   */
+  addTransaction(transaction) {
+    // TEMPORARY: localStorage
+    const stored = localStorage.getItem('livestream_transactions');
+    const transactions = stored ? JSON.parse(stored) : [];
+    
+    transactions.unshift({
+      id: Date.now(),
+      ...transaction
+    });
+    
+    // Keep only last 100 transactions
+    const trimmed = transactions.slice(0, 100);
+    localStorage.setItem('livestream_transactions', JSON.stringify(trimmed));
+    
+    // PRODUCTION: Server handles this automatically
+    // Transactions are created server-side, not client-side
+  }
+
+  // ============================================
+  // STREAMERS
+  // ============================================
+
+  /**
+   * Get streamer profile by ID
+   * @param {string} streamerId - Streamer ID
+   * @returns {Object} Streamer profile data
+   */
+  async getStreamerProfile(streamerId) {
+    // TEMPORARY: Return mock data (would need actual streamer database)
+    return {
+      id: streamerId,
+      name: 'Crystal Rose',
+      avatar: 'C',
+      color: '#ff5733',
+      isLive: false,
+      viewers: 0,
+      onlineSchedule: this.getOnlineSchedule(),
+      liveSchedule: this.getLiveSchedule()
+    };
+    
+    // PRODUCTION: Replace with API call
+    // const response = await fetch(`/api/streamers/${streamerId}`, {
+    //   headers: { 'Authorization': `Bearer ${this.getAuthToken()}` }
+    // });
+    // return response.json();
+  }
+
+  /**
+   * Get list of all streamers
+   * @param {Object} filters - Filter options (isLive, category, etc.)
+   * @returns {Array} Array of streamers
+   */
+  async getStreamers(filters = {}) {
+    // TEMPORARY: Return mock data
+    return [];
+    
+    // PRODUCTION: Replace with API call
+    // const queryString = new URLSearchParams(filters).toString();
+    // const response = await fetch(`/api/streamers?${queryString}`);
+    // return response.json();
+  }
+
+  // ============================================
+  // MESSAGES (Placeholder)
+  // ============================================
+
+  /**
+   * Get messages inbox
+   * @returns {Array} Array of messages
+   */
+  async getMessages() {
+    // TEMPORARY: Return empty array
+    return [];
+    
+    // PRODUCTION: Replace with API call
+    // const response = await fetch('/api/messages/inbox', {
+    //   headers: { 'Authorization': `Bearer ${this.getAuthToken()}` }
+    // });
+    // return response.json();
+  }
+
+  /**
+   * Send a message
+   * @param {string} toUserId - Recipient user ID
+   * @param {string} content - Message content
+   * @returns {Object} Send result
+   */
+  async sendMessage(toUserId, content) {
+    // TEMPORARY: Just return success
+    return { success: true, messageId: Date.now() };
+    
+    // PRODUCTION: Replace with API call
+    // const response = await fetch('/api/messages/send', {
+    //   method: 'POST',
+    //   headers: { 
+    //     'Authorization': `Bearer ${this.getAuthToken()}`,
+    //     'Content-Type': 'application/json'
+    //   },
+    //   body: JSON.stringify({ toUserId, content })
+    // });
+    // return response.json();
+  }
+
+  // ============================================
+  // AUTHENTICATION (For Production)
+  // ============================================
+
+  /**
+   * Get authentication token
+   * @returns {string} JWT token
+   */
+  getAuthToken() {
+    // TEMPORARY: Not needed for localStorage
+    return null;
+    
+    // PRODUCTION: Return JWT from secure storage
+    // return sessionStorage.getItem('auth_token');
+  }
+
+  /**
+   * Login user
+   * @param {string} username - Username
+   * @param {string} password - Password
+   * @returns {Object} Login result with token
+   */
+  async login(username, password) {
+    // TEMPORARY: Skip authentication
+    return { success: true, token: null };
+    
+    // PRODUCTION: Replace with API call
+    // const response = await fetch('/api/auth/login', {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify({ username, password })
+    // });
+    // const data = await response.json();
+    // if (data.token) {
+    //   sessionStorage.setItem('auth_token', data.token);
+    // }
+    // return data;
+  }
+
+  /**
+   * Logout user
+   */
+  async logout() {
+    // TEMPORARY: Clear all localStorage
+    const keys = Object.keys(localStorage).filter(k => k.startsWith('livestream_'));
+    keys.forEach(key => localStorage.removeItem(key));
+    
+    // PRODUCTION: Replace with API call
+    // await fetch('/api/auth/logout', {
+    //   method: 'POST',
+    //   headers: { 'Authorization': `Bearer ${this.getAuthToken()}` }
+    // });
+    // sessionStorage.removeItem('auth_token');
+  }
+
+  // ============================================
+  // UTILITY METHODS
+  // ============================================
+
+  /**
+   * Clear all data (for testing)
+   */
+  clearAllData() {
+    const keys = Object.keys(localStorage).filter(k => k.startsWith('livestream_'));
+    keys.forEach(key => localStorage.removeItem(key));
+    this.initializeDefaults();
+  }
+
+  /**
+   * Export all data (for backup)
+   * @returns {Object} All user data
+   */
+  exportData() {
+    return {
+      balance: this.getBalance(),
+      tipButtons: this.getTipButtons(),
+      lovenseLevels: this.getLovenseLevels(),
+      onlineSchedule: this.getOnlineSchedule(),
+      liveSchedule: this.getLiveSchedule(),
+      privateSettings: this.getPrivateShowSettings(),
+      transactions: this.getTransactions()
+    };
+  }
+
+  /**
+   * Import data (for restore)
+   * @param {Object} data - Data to import
+   */
+  importData(data) {
+    if (data.balance) this.setBalance(data.balance);
+    if (data.tipButtons) this.saveTipButtons(data.tipButtons);
+    if (data.lovenseLevels) this.saveLovenseLevels(data.lovenseLevels);
+    if (data.onlineSchedule) this.saveOnlineSchedule(data.onlineSchedule);
+    if (data.liveSchedule) this.saveLiveSchedule(data.liveSchedule);
+    if (data.privateSettings) this.savePrivateShowSettings(data.privateSettings);
+  }
+}
+
+// ============================================
+// EXPORT SINGLETON INSTANCE
+// ============================================
+
+// Create and export a single instance
+const db = new Database();
+if (typeof window !== 'undefined') { window.db = db; }
+
+    // database.js inlined - data persists via localStorage
+
+    // Data
+    const STREAMERS = [
+      {
+        id: 1,
+        name: "CryptoKitty",
+        avatar: "C",
+        title: "🚀 ALT SEASON WATCH",
+        viewers: 1342,
+        color: "#ff1744",
+        tips: [
+          { label: "🎁 Small", amount: 10 },
+          { label: "💖 Medium", amount: 50 },
+          { label: "💝 Big", amount: 100 },
+          { label: "🐋 Whale", amount: 500 }
+        ],
+        lovense: [
+          { label: "💗 Low Vibe", tokens: 15 },
+          { label: "💖 Medium Vibe", tokens: 30 },
+          { label: "💝 High Vibe", tokens: 60 },
+          { label: "🔥 Ultra Vibe", tokens: 100 }
+        ]
+      },
+      {
+        id: 2,
+        name: "DJ_NightOwl",
+        avatar: "D",
+        title: "Late Night Lo-Fi 🌙",
+        viewers: 876,
+        color: "#ff6b35",
+        tips: [
+          { label: "☕ Coffee", amount: 5 },
+          { label: "🎵 Request", amount: 25 },
+          { label: "🎸 Love", amount: 75 },
+          { label: "🎹 Support", amount: 200 }
+        ],
+        lovense: [
+          { label: "💗 Gentle", tokens: 10 },
+          { label: "💖 Medium", tokens: 25 },
+          { label: "🔥 Intense", tokens: 50 }
+        ]
+      },
+      {
+        id: 3,
+        name: "YogaWithSam",
+        avatar: "S",
+        title: "Morning Flow 🧘",
+        viewers: 421,
+        color: "#ff4da6",
+        tips: [
+          { label: "🧘 Namaste", amount: 10 },
+          { label: "🌸 Peaceful", amount: 35 },
+          { label: "🕉️ Zen", amount: 75 },
+          { label: "✨ Enlighten", amount: 200 }
+        ],
+        lovense: [
+          { label: "💗 Gentle", tokens: 10 },
+          { label: "💖 Medium", tokens: 25 },
+          { label: "🔥 Intense", tokens: 50 }
+        ]
+      }
+    ];
+
+    const PACKAGES = [
+      { name: "Starter", tokens: 100, price: 4.99, popular: false },
+      { name: "Popular", tokens: 500, price: 19.99, popular: true },
+      { name: "Pro", tokens: 1200, price: 39.99, popular: false },
+      { name: "Whale", tokens: 5000, price: 149.99, popular: false }
+    ];
+
+    // balance managed by db.getBalance() / db.setBalance()
+    let currentStreamer = null;
+    let chatHistory = [
+      { type: "system", text: "Welcome to the stream!" },
+      { type: "tip", user: "viewer_42", text: "hey! 👋" },
+      { type: "tip", user: "BigSpender", amount: 100, label: "🔥" }
+    ];
+    
+    // privateShowSettings managed by db.getPrivateShowSettings() / db.savePrivateShowSettings()
+    
+    // Private show state
+    let isInPrivateShow = false;
+    let privateShowTimeRemaining = 0; // in seconds
+    let privateShowTimer = null;
+    
+    // lovenseLevels managed by db.getLovenseLevels() / db.saveLovenseLevels()
+    
+    // customTipButtons managed by db.getTipButtons() / db.saveTipButtons()
+    
+    // onlineSchedule managed by db.getOnlineSchedule() / db.saveOnlineSchedule()
+    
+    // liveSchedule managed by db.getLiveSchedule() / db.saveLiveSchedule()
+    
+    let currentProfile = null;
+
+    // Initialize
+    function init() {
+      renderLobby();
+      renderPackages();
+      updateBalance();
+    }
+
+    // Render lobby
+    function renderLobby() {
+      const grid = document.getElementById('streamGrid');
+      grid.innerHTML = STREAMERS.map(s => `
+        <div class="stream-card" onclick="openRoom(${s.id})">
+          <div class="stream-thumbnail" style="background: ${s.color};">
+            <div class="stream-avatar">${s.avatar}</div>
+            <div class="live-badge">
+              <div class="pulse-dot"></div>
+              LIVE
+            </div>
+            <div class="viewer-count">👁️ ${s.viewers.toLocaleString()}</div>
+          </div>
+          <div class="stream-info">
+            <div class="stream-name">${s.name}</div>
+            <div class="stream-title">${s.title}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Render packages
+    function renderPackages() {
+      const grid = document.getElementById('packageGrid');
+      grid.innerHTML = PACKAGES.map(p => `
+        <div class="package-card ${p.popular ? 'popular' : ''}">
+          ${p.popular ? '<div class="popular-badge">⭐ POPULAR</div>' : ''}
+          <div class="package-icon">🪙</div>
+          <div class="package-name">${p.name}</div>
+          <div class="package-tokens">${p.tokens.toLocaleString()}</div>
+          <div class="package-label">tokens</div>
+          <button class="buy-btn ${p.popular ? 'popular' : ''}" onclick="buyPackage(${p.tokens})">
+            BUY $${p.price}
+          </button>
+        </div>
+      `).join('');
+    }
+
+    // Open room
+    function openRoom(id) {
+      currentStreamer = STREAMERS.find(s => s.id === id);
+      
+      document.getElementById('roomAvatar').innerHTML = currentStreamer.avatar;
+      document.getElementById('roomAvatar').style.background = currentStreamer.color;
+      document.getElementById('roomName').textContent = currentStreamer.name;
+      document.getElementById('roomTitle').textContent = currentStreamer.title;
+      document.getElementById('roomViewers').textContent = `👁️ ${currentStreamer.viewers.toLocaleString()}`;
+      
+      // Render tip buttons (use dashboard configured buttons)
+      const tipSection = document.getElementById('tipButtons');
+      const customTipButtons = db.getTipButtons();
+      tipSection.innerHTML = customTipButtons.map((tip, i) => `
+        <button class="tip-btn" onclick="sendTip(${tip.amount}, '${tip.icon} ${tip.label}')">
+          <div class="tip-label">${tip.icon} ${tip.label}</div>
+          <div class="tip-amount">🪙 ${tip.amount}</div>
+        </button>
+      `).join('');
+      
+      // Render lovense options (use dashboard configured levels)
+      const lovenseContent = document.getElementById('lovenseContent');
+      const lovenseLevels = db.getLovenseLevels();
+      lovenseContent.innerHTML = lovenseLevels.map(l => `
+        <div class="lovense-item" onclick="activateLovense('${l.label}', ${l.tokens}, ${l.duration})">
+          <span class="lovense-label">${l.icon} ${l.label}</span>
+          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+            <span class="lovense-cost">🪙 ${l.tokens}</span>
+            <span style="font-size: 10px; color: #ff8a80;">${l.duration}s</span>
+          </div>
+        </div>
+      `).join('');
+      
+      renderChat();
+      showPage('room');
+    }
+
+    // Send tip
+    function sendTip(amount, label) {
+      const balance = db.getBalance();
+      if (balance < amount) {
+        alert('Not enough tokens!');
+        return;
+      }
+      
+      db.deductTokens(amount, 'tip');
+      updateBalance();
+      
+      chatHistory.unshift({
+        type: 'tip',
+        user: 'you',
+        text: label,
+        amount: amount
+      });
+      
+      renderChat();
+    }
+
+    // Activate Lovense
+    function activateLovense(label, tokens, duration) {
+      const balance = db.getBalance();
+      if (balance < tokens) {
+        alert('Not enough tokens!');
+        return;
+      }
+      
+      db.deductTokens(tokens, 'lovense');
+      updateBalance();
+      
+      chatHistory.unshift({
+        type: 'lovense',
+        user: 'you',
+        text: `${label} (${duration}s)`,
+        amount: tokens
+      });
+      
+      renderChat();
+      closeLovense();
+    }
+
+    // Render chat
+    function renderChat() {
+      const chat = document.getElementById('chatMessages');
+      chat.innerHTML = chatHistory.slice(0, 10).map(msg => {
+        if (msg.type === 'tip' && msg.amount) {
+          return `
+            <div class="chat-msg">
+              <span class="chat-user">${msg.user}</span>
+              <span>${msg.text}</span>
+              <span style="margin-left: auto; font-weight: 900; color: #ffc107; font-size: 18px;">
+                🪙 ${msg.amount}
+              </span>
+            </div>
+          `;
+        }
+        if (msg.type === 'lovense') {
+          return `
+            <div class="chat-msg" style="border-color: #ff4da6; background: rgba(255, 77, 166, 0.2);">
+              <span class="chat-user" style="color: #ff4da6;">${msg.user}</span>
+              <span>activated ${msg.text}</span>
+              <span style="margin-left: auto; font-weight: 900; color: #ff4da6;">
+                🪙 ${msg.amount}
+              </span>
+            </div>
+          `;
+        }
+        return `<div class="chat-msg">${msg.text}</div>`;
+      }).join('');
+    }
+
+    // Buy package
+    function buyPackage(tokens) {
+      db.addTokens(tokens);
+      updateBalance();
+      alert(`Added ${tokens} tokens!`);
+    }
+
+    // Update balance
+    function updateBalance() {
+      const balance = db.getBalance();
+      document.getElementById('tokenBadge').textContent = `🪙 ${balance.toLocaleString()}`;
+    }
+
+    // Show page
+    function showPage(page) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      
+      if (page === 'lobby') {
+        document.getElementById('lobbyPage').classList.add('active');
+        document.querySelectorAll('.nav-item')[0].classList.add('active');
+      } else if (page === 'room') {
+        document.getElementById('roomPage').classList.add('active');
+      } else if (page === 'profile') {
+        document.getElementById('profilePage').classList.add('active');
+      } else if (page === 'tokens') {
+        document.getElementById('tokensPage').classList.add('active');
+        document.querySelectorAll('.nav-item')[2].classList.add('active');
+      } else if (page === 'dashboard') {
+        document.getElementById('dashboardPage').classList.add('active');
+        document.querySelectorAll('.nav-item')[3].classList.add('active');
+      }
+    }
+
+    // Lovense sheet
+    function openLovense() {
+      document.getElementById('lovenseOverlay').classList.add('visible');
+      document.getElementById('lovenseSheet').classList.add('open');
+    }
+
+    function closeLovense() {
+      document.getElementById('lovenseOverlay').classList.remove('visible');
+      document.getElementById('lovenseSheet').classList.remove('open');
+    }
+    
+    // Private show sheet
+    function openPrivateSheet() {
+      document.getElementById('privateOverlay').classList.add('visible');
+      document.getElementById('privateSheet').classList.add('open');
+    }
+    
+    function closePrivateSheet() {
+      document.getElementById('privateOverlay').classList.remove('visible');
+      document.getElementById('privateSheet').classList.remove('open');
+    }
+    
+    // Start private show
+    function startPrivateShow() {
+      const privateShowSettings = db.getPrivateShowSettings();
+      const balance = db.getBalance();
+      const cost = 60; // 10 min x $6/min = $60 in tokens
+      if (balance < cost) {
+        alert('Not enough tokens!\n\nPrivate show costs 60 tokens (10 minutes).\nYour balance: ' + balance + ' tokens\n\nVisit the Wallet to buy more tokens.');
+        closePrivateSheet();
+        showPage('tokens');
+        return;
+      }
+      
+      db.deductTokens(cost, 'private-show');
+      updateBalance();
+      closePrivateSheet();
+      
+      chatHistory.unshift({
+        type: 'system',
+        text: '🔒 Private show started! 10 minutes • Room is now private'
+      });
+      
+      renderChat();
+      alert('🔒 Private Show Started!\n\n✨ You now have exclusive access\n⏱️ Duration: 10 minutes\n💰 Cost: 60 tokens\n\n🎥 The show will begin shortly...');
+    }
+    
+    // Join spy mode
+    function joinSpyMode() {
+      alert('👁️ Spy Mode\n\nThis feature allows you to watch someone else\'s private show at a reduced rate.\n\n💰 Cost: $3/min (50% off)\n🚫 Watch only - no interaction\n\nNo private shows currently available to spy on.');
+      closePrivateSheet();
+    }
+    
+    // Dashboard: Save private show settings
+    function savePrivateSettings() {
+      const privateShowSettings = {
+        tokensPerMin: parseInt(document.getElementById('tokensPerMin').value),
+        minDuration: parseInt(document.getElementById('minDuration').value),
+        extensions: [
+          {
+            minutes: parseInt(document.getElementById('ext1Minutes').value),
+            tokens: parseInt(document.getElementById('ext1Tokens').value)
+          },
+          {
+            minutes: parseInt(document.getElementById('ext2Minutes').value),
+            tokens: parseInt(document.getElementById('ext2Tokens').value)
+          },
+          {
+            minutes: parseInt(document.getElementById('ext3Minutes').value),
+            tokens: parseInt(document.getElementById('ext3Tokens').value)
+          }
+        ]
+      };
+      
+      db.savePrivateShowSettings(privateShowSettings);
+      updatePrivateShowUI();
+      updateDashboardPreview();
+      
+      alert('✅ Private show settings saved!\n\nYour new pricing and extensions are now active.');
+    }
+    
+    // Update UI with new settings
+    function updatePrivateShowUI() {
+      const privateShowSettings = db.getPrivateShowSettings();
+      const pricePerMin = (privateShowSettings.tokensPerMin / 10).toFixed(0);
+      document.querySelector('.floating-btn-price').textContent = '$' + pricePerMin + '/min';
+    }
+    
+    // Update dashboard preview
+    function updateDashboardPreview() {
+      const privateShowSettings = db.getPrivateShowSettings();
+      const pricePerMin = (privateShowSettings.tokensPerMin / 10).toFixed(0);
+      const minCost = privateShowSettings.tokensPerMin * privateShowSettings.minDuration;
+      const minCostUSD = (minCost / 10).toFixed(0);
+      
+      document.getElementById('previewPrice').textContent = pricePerMin;
+      document.getElementById('previewMinCost').textContent = minCost;
+      document.getElementById('previewMinCostUSD').textContent = minCostUSD;
+      
+      document.getElementById('previewExt1Min').textContent = privateShowSettings.extensions[0].minutes;
+      document.getElementById('previewExt1Tokens').textContent = privateShowSettings.extensions[0].tokens;
+      document.getElementById('previewExt2Min').textContent = privateShowSettings.extensions[1].minutes;
+      document.getElementById('previewExt2Tokens').textContent = privateShowSettings.extensions[1].tokens;
+      document.getElementById('previewExt3Min').textContent = privateShowSettings.extensions[2].minutes;
+      document.getElementById('previewExt3Tokens').textContent = privateShowSettings.extensions[2].tokens;
+    }
+    
+    // Real-time preview updates
+    function setupDashboardListeners() {
+      const inputs = ['tokensPerMin', 'minDuration', 'ext1Minutes', 'ext1Tokens', 'ext2Minutes', 'ext2Tokens', 'ext3Minutes', 'ext3Tokens'];
+      inputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener('input', () => {
+            const temp = {
+              tokensPerMin: parseInt(document.getElementById('tokensPerMin').value),
+              minDuration: parseInt(document.getElementById('minDuration').value),
+              extensions: [
+                {
+                  minutes: parseInt(document.getElementById('ext1Minutes').value),
+                  tokens: parseInt(document.getElementById('ext1Tokens').value)
+                },
+                {
+                  minutes: parseInt(document.getElementById('ext2Minutes').value),
+                  tokens: parseInt(document.getElementById('ext2Tokens').value)
+                },
+                {
+                  minutes: parseInt(document.getElementById('ext3Minutes').value),
+                  tokens: parseInt(document.getElementById('ext3Tokens').value)
+                }
+              ]
+            };
+            
+            const pricePerMin = (temp.tokensPerMin / 10).toFixed(0);
+            const minCost = temp.tokensPerMin * temp.minDuration;
+            const minCostUSD = (minCost / 10).toFixed(0);
+            
+            document.getElementById('previewPrice').textContent = pricePerMin;
+            document.getElementById('previewMinCost').textContent = minCost;
+            document.getElementById('previewMinCostUSD').textContent = minCostUSD;
+            
+            document.getElementById('previewExt1Min').textContent = temp.extensions[0].minutes;
+            document.getElementById('previewExt1Tokens').textContent = temp.extensions[0].tokens;
+            document.getElementById('previewExt2Min').textContent = temp.extensions[1].minutes;
+            document.getElementById('previewExt2Tokens').textContent = temp.extensions[1].tokens;
+            document.getElementById('previewExt3Min').textContent = temp.extensions[2].minutes;
+            document.getElementById('previewExt3Tokens').textContent = temp.extensions[2].tokens;
+          });
+        }
+      });
+    }
+    
+    // Start private show with timer
+    function startPrivateShow() {
+      const privateShowSettings = db.getPrivateShowSettings();
+      const balance = db.getBalance();
+      const cost = privateShowSettings.tokensPerMin * privateShowSettings.minDuration;
+      if (balance < cost) {
+        alert('Not enough tokens!\n\nPrivate show costs ' + cost + ' tokens (' + privateShowSettings.minDuration + ' minutes).\nYour balance: ' + balance + ' tokens\n\nVisit the Wallet to buy more tokens.');
+        closePrivateSheet();
+        showPage('tokens');
+        return;
+      }
+      
+      db.deductTokens(cost, 'private-show');
+      updateBalance();
+      closePrivateSheet();
+      
+      isInPrivateShow = true;
+      privateShowTimeRemaining = privateShowSettings.minDuration * 60; // convert to seconds
+      
+      // Show timer and More Time button
+      document.getElementById('privateTimer').style.display = 'block';
+      document.getElementById('moreTimeBtn').style.display = 'block';
+      
+      // Start countdown
+      updateTimerDisplay();
+      privateShowTimer = setInterval(() => {
+        privateShowTimeRemaining--;
+        updateTimerDisplay();
+        
+        if (privateShowTimeRemaining <= 0) {
+          endPrivateShow();
+        }
+      }, 1000);
+      
+      chatHistory.unshift({
+        type: 'system',
+        text: '🔒 Private show started! ' + privateShowSettings.minDuration + ' minutes • Room is now private'
+      });
+      
+      renderChat();
+      alert('🔒 Private Show Started!\n\n✨ You now have exclusive access\n⏱️ Duration: ' + privateShowSettings.minDuration + ' minutes\n💰 Cost: ' + cost + ' tokens\n\n🎥 The show will begin shortly...');
+    }
+    
+    // Update timer display
+    function updateTimerDisplay() {
+      const minutes = Math.floor(privateShowTimeRemaining / 60);
+      const seconds = privateShowTimeRemaining % 60;
+      const display = minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+      
+      document.getElementById('timerDisplay').textContent = display;
+      document.getElementById('moreTimeCurrentTimer').textContent = display;
+    }
+    
+    // End private show
+    function endPrivateShow() {
+      clearInterval(privateShowTimer);
+      isInPrivateShow = false;
+      privateShowTimeRemaining = 0;
+      
+      document.getElementById('privateTimer').style.display = 'none';
+      document.getElementById('moreTimeBtn').style.display = 'none';
+      
+      chatHistory.unshift({
+        type: 'system',
+        text: '⏰ Private show ended. Thank you!'
+      });
+      
+      renderChat();
+      alert('⏰ Private Show Ended\n\nThank you for your time!\n\n💎 You can start another private show anytime.');
+    }
+    
+    // Show more time options
+    function showMoreTimeOptions() {
+      const privateShowSettings = db.getPrivateShowSettings();
+      const html = privateShowSettings.extensions.map((ext, i) => {
+        return `
+          <div onclick="addMoreTime(${i})" style="background: linear-gradient(135deg, rgba(255,193,7,0.15), rgba(255,140,0,0.15)); border: 2px solid #ffc107; border-radius: 12px; padding: 20px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-size: 18px; font-weight: 900; color: #ffc107; margin-bottom: 4px;">+${ext.minutes} Minutes</div>
+                <div style="font-size: 12px; color: #ff8a80;">Extend your private show</div>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 24px; font-weight: 900; color: #fff;">${ext.tokens}</div>
+                <div style="font-size: 11px; color: #ff8a80;">tokens</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      document.getElementById('extensionOptions').innerHTML = html;
+      document.getElementById('moreTimeOverlay').classList.add('visible');
+      document.getElementById('moreTimeSheet').classList.add('open');
+    }
+    
+    // Close more time sheet
+    function closeMoreTimeSheet() {
+      document.getElementById('moreTimeOverlay').classList.remove('visible');
+      document.getElementById('moreTimeSheet').classList.remove('open');
+    }
+    
+    // Add more time
+    function addMoreTime(index) {
+      const privateShowSettings = db.getPrivateShowSettings();
+      const ext = privateShowSettings.extensions[index];
+      const balance = db.getBalance();
+      
+      if (balance < ext.tokens) {
+        alert('Not enough tokens!\n\nExtension costs ' + ext.tokens + ' tokens.\nYour balance: ' + balance + ' tokens');
+        closeMoreTimeSheet();
+        return;
+      }
+      
+      db.deductTokens(ext.tokens, 'private-extension');
+      updateBalance();
+      
+      privateShowTimeRemaining += (ext.minutes * 60);
+      updateTimerDisplay();
+      
+      closeMoreTimeSheet();
+      
+      chatHistory.unshift({
+        type: 'system',
+        text: '⏱️ +' + ext.minutes + ' minutes added! (' + ext.tokens + ' tokens)'
+      });
+      
+      renderChat();
+      
+      alert('✅ Time Added!\n\n⏱️ +' + ext.minutes + ' minutes\n💰 Cost: ' + ext.tokens + ' tokens\n\nEnjoy your extended private show!');
+    }
+    
+    // Lovense Dashboard Functions
+    function renderLovenseLevelsList() {
+      const list = document.getElementById('lovenseLevelsList');
+      const count = document.getElementById('lovenseLevelCount');
+      const maxWarning = document.getElementById('lovenseMaxWarning');
+      const addForm = document.getElementById('lovenseAddForm');
+      const lovenseLevels = db.getLovenseLevels();
+      
+      count.textContent = lovenseLevels.length + '/5';
+      
+      if (lovenseLevels.length >= 5) {
+        maxWarning.style.display = 'block';
+        addForm.style.display = 'none';
+      } else {
+        maxWarning.style.display = 'none';
+        addForm.style.display = 'block';
+      }
+      
+      list.innerHTML = lovenseLevels.map(level => `
+        <div style="background: rgba(255, 77, 166, 0.1); border: 1px solid #ff4da6; border-radius: 8px; padding: 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+          <div style="flex: 1;">
+            <div style="font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 4px;">
+              ${level.icon} ${level.label}
+            </div>
+            <div style="font-size: 12px; color: #ff8a80;">
+              ${level.tokens} tokens • ${level.duration}s
+            </div>
+          </div>
+          <button onclick="deleteLovenseLevel(${level.id})" style="background: rgba(255, 23, 68, 0.2); border: 2px solid #ff1744; color: #ff1744; width: 36px; height: 36px; border-radius: 8px; font-size: 18px; cursor: pointer; font-weight: 900;">
+            ✕
+          </button>
+        </div>
+      `).join('');
+    }
+    
+    function addLovenseLevel() {
+      const lovenseLevels = db.getLovenseLevels();
+      if (lovenseLevels.length >= 5) {
+        alert('⚠️ Maximum 5 levels reached!\n\nDelete a level to add a new one.');
+        return;
+      }
+      
+      const icon = document.getElementById('newLovenseIcon').value;
+      const label = document.getElementById('newLovenseLabel').value.trim();
+      const tokens = parseInt(document.getElementById('newLovenseTokens').value);
+      const duration = parseInt(document.getElementById('newLovenseDuration').value);
+      
+      if (!label) {
+        alert('⚠️ Please enter a label for this level.');
+        return;
+      }
+      
+      if (tokens < 1 || tokens > 1000) {
+        alert('⚠️ Tokens must be between 1 and 1000.');
+        return;
+      }
+      
+      if (duration < 1 || duration > 300) {
+        alert('⚠️ Duration must be between 1 and 300 seconds.');
+        return;
+      }
+      
+      const newLevel = {
+        id: Date.now(),
+        icon: icon,
+        label: label,
+        tokens: tokens,
+        duration: duration
+      };
+      
+      lovenseLevels.push(newLevel);
+      db.saveLovenseLevels(lovenseLevels);
+      
+      // Reset form
+      document.getElementById('newLovenseLabel').value = '';
+      document.getElementById('newLovenseTokens').value = '15';
+      document.getElementById('newLovenseDuration').value = '10';
+      document.getElementById('newLovenseIcon').value = '💗';
+      
+      renderLovenseLevelsList();
+      
+      alert('✅ Level added!\n\n' + icon + ' ' + label + '\n' + tokens + ' tokens • ' + duration + 's');
+    }
+    
+    function deleteLovenseLevel(id) {
+      const lovenseLevels = db.getLovenseLevels();
+      const level = lovenseLevels.find(l => l.id === id);
+      if (!level) return;
+      
+      if (confirm('Delete this Lovense level?\n\n' + level.icon + ' ' + level.label + '\n' + level.tokens + ' tokens • ' + level.duration + 's')) {
+        const filtered = lovenseLevels.filter(l => l.id !== id);
+        db.saveLovenseLevels(filtered);
+        renderLovenseLevelsList();
+      }
+    }
+    
+    // Tip Button Configurator Functions
+    function renderTipButtonEditors() {
+      const container = document.getElementById('tipButtonEditors');
+      const customTipButtons = db.getTipButtons();
+      
+      container.innerHTML = customTipButtons.map((btn, index) => `
+        <div style="background: rgba(255, 23, 68, 0.1); border: 2px solid #ff1744; border-radius: 12px; padding: 16px; margin-bottom: 12px;">
+          <div style="color: #ff1744; font-weight: 900; margin-bottom: 12px; font-size: 14px;">Button ${index + 1}</div>
+          
+          <div style="margin-bottom: 12px;">
+            <label style="display: block; color: #ff8a80; font-size: 12px; margin-bottom: 6px;">Icon</label>
+            <select id="tipIcon${index}" onchange="updateTipPreview()" style="width: 100%; background: #000; border: 1px solid #ff1744; border-radius: 6px; padding: 10px; color: #fff; font-size: 16px;">
+              <option value="🎁" ${btn.icon === '🎁' ? 'selected' : ''}>🎁 Gift</option>
+              <option value="💖" ${btn.icon === '💖' ? 'selected' : ''}>💖 Sparkling Heart</option>
+              <option value="💝" ${btn.icon === '💝' ? 'selected' : ''}>💝 Heart Gift</option>
+              <option value="💎" ${btn.icon === '💎' ? 'selected' : ''}>💎 Gem</option>
+              <option value="👑" ${btn.icon === '👑' ? 'selected' : ''}>👑 Crown</option>
+              <option value="🌟" ${btn.icon === '🌟' ? 'selected' : ''}>🌟 Star</option>
+              <option value="✨" ${btn.icon === '✨' ? 'selected' : ''}>✨ Sparkles</option>
+              <option value="💰" ${btn.icon === '💰' ? 'selected' : ''}>💰 Money Bag</option>
+              <option value="🔥" ${btn.icon === '🔥' ? 'selected' : ''}>🔥 Fire</option>
+              <option value="⚡" ${btn.icon === '⚡' ? 'selected' : ''}>⚡ Lightning</option>
+              <option value="💥" ${btn.icon === '💥' ? 'selected' : ''}>💥 Boom</option>
+              <option value="🐋" ${btn.icon === '🐋' ? 'selected' : ''}>🐋 Whale</option>
+              <option value="🎆" ${btn.icon === '🎆' ? 'selected' : ''}>🎆 Fireworks</option>
+              <option value="🎉" ${btn.icon === '🎉' ? 'selected' : ''}>🎉 Party</option>
+              <option value="🍾" ${btn.icon === '🍾' ? 'selected' : ''}>🍾 Champagne</option>
+              <option value="🏆" ${btn.icon === '🏆' ? 'selected' : ''}>🏆 Trophy</option>
+            </select>
+          </div>
+          
+          <div style="margin-bottom: 12px;">
+            <label style="display: block; color: #ff8a80; font-size: 12px; margin-bottom: 6px;">Label</label>
+            <input type="text" id="tipLabel${index}" value="${btn.label}" maxlength="20" onkeyup="updateTipPreview()" style="width: 100%; background: #000; border: 1px solid #ff1744; border-radius: 6px; padding: 10px; color: #fff; font-size: 14px;" placeholder="e.g., Small, Big, Whale">
+          </div>
+          
+          <div>
+            <label style="display: block; color: #ff8a80; font-size: 12px; margin-bottom: 6px;">Tokens</label>
+            <input type="number" id="tipAmount${index}" value="${btn.amount}" min="1" max="10000" onkeyup="updateTipPreview()" style="width: 100%; background: #000; border: 1px solid #ff1744; border-radius: 6px; padding: 10px; color: #fff; font-size: 14px;">
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    function updateTipPreview() {
+      for (let i = 0; i < 4; i++) {
+        const icon = document.getElementById('tipIcon' + i).value;
+        const label = document.getElementById('tipLabel' + i).value || 'Button ' + (i + 1);
+        const amount = document.getElementById('tipAmount' + i).value || '0';
+        
+        const preview = document.getElementById('tipPreview' + (i + 1));
+        preview.querySelector('.tip-label').textContent = icon + ' ' + label;
+        preview.querySelector('.tip-amount').textContent = '🪙 ' + amount;
+      }
+    }
+    
+    function saveTipButtons() {
+      // Validate all fields
+      for (let i = 0; i < 4; i++) {
+        const label = document.getElementById('tipLabel' + i).value.trim();
+        const amount = parseInt(document.getElementById('tipAmount' + i).value);
+        
+        if (!label) {
+          alert('⚠️ Button ' + (i + 1) + ' needs a label!');
+          return;
+        }
+        
+        if (amount < 1 || amount > 10000) {
+          alert('⚠️ Button ' + (i + 1) + ' tokens must be between 1 and 10,000!');
+          return;
+        }
+      }
+      
+      // Save all buttons
+      const newButtons = [];
+      for (let i = 0; i < 4; i++) {
+        newButtons.push({
+          icon: document.getElementById('tipIcon' + i).value,
+          label: document.getElementById('tipLabel' + i).value.trim(),
+          amount: parseInt(document.getElementById('tipAmount' + i).value)
+        });
+      }
+      db.saveTipButtons(newButtons);
+      
+      alert('✅ Tip buttons saved!\n\nYour custom buttons are now active in all rooms.');
+    }
+    
+    // Schedule Management Functions
+    function renderOnlineSchedule() {
+      const list = document.getElementById('onlineScheduleList');
+      const onlineSchedule = db.getOnlineSchedule();
+      if (onlineSchedule.length === 0) {
+        list.innerHTML = '<div style="color: #666; font-size: 13px; text-align: center; padding: 20px;">No online hours set</div>';
+        return;
+      }
+      
+      list.innerHTML = onlineSchedule.map(slot => `
+        <div style="background: rgba(255, 193, 7, 0.1); border: 1px solid #ffc107; border-radius: 8px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 4px;">${slot.day}</div>
+            <div style="font-size: 12px; color: #ffc107;">${slot.startTime} - ${slot.endTime}</div>
+          </div>
+          <button onclick="deleteOnlineSchedule(${slot.id})" style="background: rgba(255, 23, 68, 0.2); border: 2px solid #ff1744; color: #ff1744; width: 32px; height: 32px; border-radius: 6px; font-size: 16px; cursor: pointer;">✕</button>
+        </div>
+      `).join('');
+    }
+    
+    function renderLiveSchedule() {
+      const list = document.getElementById('liveScheduleList');
+      const liveSchedule = db.getLiveSchedule();
+      if (liveSchedule.length === 0) {
+        list.innerHTML = '<div style="color: #666; font-size: 13px; text-align: center; padding: 20px;">No live hours set</div>';
+        return;
+      }
+      
+      list.innerHTML = liveSchedule.map(slot => `
+        <div style="background: rgba(255, 23, 68, 0.1); border: 1px solid #ff1744; border-radius: 8px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 4px;">${slot.day}</div>
+            <div style="font-size: 12px; color: #ff1744;">${slot.startTime} - ${slot.endTime}</div>
+          </div>
+          <button onclick="deleteLiveSchedule(${slot.id})" style="background: rgba(255, 23, 68, 0.2); border: 2px solid #ff1744; color: #ff1744; width: 32px; height: 32px; border-radius: 6px; font-size: 16px; cursor: pointer;">✕</button>
+        </div>
+      `).join('');
+    }
+    
+    function addOnlineSchedule() {
+      const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+      const day = prompt('Select day:\n\n' + days.map((d, i) => (i + 1) + '. ' + d).join('\n'));
+      
+      if (!day || day < 1 || day > 7) return;
+      
+      const dayName = days[parseInt(day) - 1];
+      const startTime = prompt('Start time (24-hour format):\nExample: 18:00');
+      if (!startTime || !startTime.match(/^\d{2}:\d{2}$/)) {
+        alert('Invalid time format. Use HH:MM (e.g., 18:00)');
+        return;
+      }
+      
+      const endTime = prompt('End time (24-hour format):\nExample: 23:00');
+      if (!endTime || !endTime.match(/^\d{2}:\d{2}$/)) {
+        alert('Invalid time format. Use HH:MM (e.g., 23:00)');
+        return;
+      }
+      
+      const onlineSchedule = db.getOnlineSchedule();
+      onlineSchedule.push({
+        id: Date.now(),
+        day: dayName,
+        startTime: startTime,
+        endTime: endTime
+      });
+      db.saveOnlineSchedule(onlineSchedule);
+      
+      renderOnlineSchedule();
+      alert('✅ Online hours added!\n\n' + dayName + '\n' + startTime + ' - ' + endTime);
+    }
+    
+    function addLiveSchedule() {
+      const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+      const day = prompt('Select day:\n\n' + days.map((d, i) => (i + 1) + '. ' + d).join('\n'));
+      
+      if (!day || day < 1 || day > 7) return;
+      
+      const dayName = days[parseInt(day) - 1];
+      const startTime = prompt('Start time (24-hour format):\nExample: 20:00');
+      if (!startTime || !startTime.match(/^\d{2}:\d{2}$/)) {
+        alert('Invalid time format. Use HH:MM (e.g., 20:00)');
+        return;
+      }
+      
+      const endTime = prompt('End time (24-hour format):\nExample: 22:00');
+      if (!endTime || !endTime.match(/^\d{2}:\d{2}$/)) {
+        alert('Invalid time format. Use HH:MM (e.g., 22:00)');
+        return;
+      }
+      
+      const liveSchedule = db.getLiveSchedule();
+      liveSchedule.push({
+        id: Date.now(),
+        day: dayName,
+        startTime: startTime,
+        endTime: endTime
+      });
+      db.saveLiveSchedule(liveSchedule);
+      
+      renderLiveSchedule();
+      alert('✅ Live hours added!\n\n' + dayName + '\n' + startTime + ' - ' + endTime);
+    }
+    
+    function deleteOnlineSchedule(id) {
+      const onlineSchedule = db.getOnlineSchedule();
+      const slot = onlineSchedule.find(s => s.id === id);
+      if (!slot) return;
+      
+      if (confirm('Delete this online schedule?\n\n' + slot.day + '\n' + slot.startTime + ' - ' + slot.endTime)) {
+        const filtered = onlineSchedule.filter(s => s.id !== id);
+        db.saveOnlineSchedule(filtered);
+        renderOnlineSchedule();
+      }
+    }
+    
+    function deleteLiveSchedule(id) {
+      const liveSchedule = db.getLiveSchedule();
+      const slot = liveSchedule.find(s => s.id === id);
+      if (!slot) return;
+      
+      if (confirm('Delete this live schedule?\n\n' + slot.day + '\n' + slot.startTime + ' - ' + slot.endTime)) {
+        const filtered = liveSchedule.filter(s => s.id !== id);
+        db.saveLiveSchedule(filtered);
+        renderLiveSchedule();
+      }
+    }
+    
+    // Profile Page Functions
+    function openProfile(streamerName, avatar, color) {
+      currentProfile = { name: streamerName, avatar: avatar, color: color };
+      
+      document.getElementById('profileAvatar').innerHTML = avatar;
+      document.getElementById('profileAvatar').style.background = color;
+      document.getElementById('profileName').textContent = streamerName;
+      
+      // Render schedules
+      const onlineSchedule = db.getOnlineSchedule();
+      const onlineScheduleDiv = document.getElementById('profileOnlineSchedule');
+      if (onlineSchedule.length === 0) {
+        onlineScheduleDiv.innerHTML = '<div style="color: #666; font-size: 13px;">No online hours set</div>';
+      } else {
+        onlineScheduleDiv.innerHTML = onlineSchedule.map(slot => `
+          <div style="background: rgba(255, 193, 7, 0.1); border: 1px solid #ffc107; border-radius: 6px; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 13px; font-weight: 700; color: #fff;">${slot.day}</span>
+            <span style="font-size: 12px; color: #ffc107;">${slot.startTime} - ${slot.endTime}</span>
+          </div>
+        `).join('');
+      }
+      
+      const liveSchedule = db.getLiveSchedule();
+      const liveScheduleDiv = document.getElementById('profileLiveSchedule');
+      if (liveSchedule.length === 0) {
+        liveScheduleDiv.innerHTML = '<div style="color: #666; font-size: 13px;">No live hours set</div>';
+      } else {
+        liveScheduleDiv.innerHTML = liveSchedule.map(slot => `
+          <div style="background: rgba(255, 23, 68, 0.1); border: 1px solid #ff1744; border-radius: 6px; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 13px; font-weight: 700; color: #fff;">${slot.day}</span>
+            <span style="font-size: 12px; color: #ff1744;">${slot.startTime} - ${slot.endTime}</span>
+          </div>
+        `).join('');
+      }
+      
+      showPage('profile');
+    }
+    
+    function bookPrivateShow() {
+      alert('📅 Book Private Show\n\n' + currentProfile.name + '\n\nFeature coming soon!\n\nYou\'ll be able to:\n• Choose date & time\n• Pre-pay with tokens\n• Get calendar reminder\n• Receive confirmation');
+    }
+    
+    function sendMessage() {
+      alert('💌 Send Message\n\n' + currentProfile.name + '\n\nFeature coming soon!\n\nYou\'ll be able to:\n• Send private messages\n• Attach photos\n• Schedule shows\n• Build relationship');
+    }
+
+    // Initialize on load
+    init();
+    setupDashboardListeners();
+    renderLovenseLevelsList();
+    renderTipButtonEditors();
+    renderOnlineSchedule();
+    renderLiveSchedule();
+    updateBalance();
+    
+    // Populate dashboard form fields from persisted settings
+    (function loadDashboardSettings() {
+      const ps = db.getPrivateShowSettings();
+      const el = (id) => document.getElementById(id);
+      if (el('tokensPerMin')) el('tokensPerMin').value = ps.tokensPerMin;
+      if (el('minDuration')) el('minDuration').value = ps.minDuration;
+      if (ps.extensions && ps.extensions.length >= 3) {
+        if (el('ext1Minutes')) el('ext1Minutes').value = ps.extensions[0].minutes;
+        if (el('ext1Tokens')) el('ext1Tokens').value = ps.extensions[0].tokens;
+        if (el('ext2Minutes')) el('ext2Minutes').value = ps.extensions[1].minutes;
+        if (el('ext2Tokens')) el('ext2Tokens').value = ps.extensions[1].tokens;
+        if (el('ext3Minutes')) el('ext3Minutes').value = ps.extensions[2].minutes;
+        if (el('ext3Tokens')) el('ext3Tokens').value = ps.extensions[2].tokens;
+      }
+      updateDashboardPreview();
+      updatePrivateShowUI();
+    })();
+    
+    // Check if opening to a profile page
+    try {
+      const profileData = localStorage.getItem('viewProfile');
+      if (profileData) {
+        localStorage.removeItem('viewProfile');
+        const profile = JSON.parse(profileData);
+        openProfile(profile.name, profile.avatar, profile.color);
+      }
+    } catch (e) {
+      // Ignore localStorage errors on mobile
+    }
+  </script>
+</body>
+</html>
